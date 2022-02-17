@@ -1,0 +1,8 @@
+{
+  "super_user": 12345678,
+  "pic_dir": "/mnt/data/pics",
+  "voice_dir": "/mnt/data/voice",
+  "user_record_level": 1,
+  "private_limit": 10,
+  "db_schema":"***.db",
+}

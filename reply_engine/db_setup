@@ -1,0 +1,23 @@
+# public cmd and reply tables
+CREATE TABLE if not exists cmd_alias(id INTEGER PRIMARY KEY AUTOINCREMENT, cmd TEXT, p_cmd_id INTEGER, active INTEGER, type INTEGER, level INTEGER, sequence_1 INTEGER, sequence_2 INTEGER, sequence_4 INTEGER, sequence_8 INTEGER)
+CREATE UNIQUE INDEX if not exists alias_idx0 on cmd_alias(cmd)
+CREATE TABLE if not exists replies(cmd_id INTEGER, type INTEGER, id INTEGER, tag VARCHAR(100), deleted INTEGER, hash VARCHAR(30), file_type VARCHAR(10), reply TEXT, stamp DATE, user_id INTEGER, time_used INTEGER)
+CREATE UNIQUE INDEX if not exists reply_idx0 on replies(cmd_id, type, id)
+CREATE        INDEX if not exists reply_idx1 on replies(cmd_id, type, tag)
+# user and user_records tables
+CREATE TABLE if not exists users(user_id INTEGER PRIMARY KEY AUTOINCREMENT, qq_id VARCHAR(15), first_used DATE, permission INTEGER)
+CREATE UNIQUE INDEX if not exists user_idx0 on users(qq_id)
+CREATE TABLE if not exists user_records(user_id INTEGER, orig_cmd_id INTEGER, cmd_id INTEGER, type INTEGER, reply_id INTEGER, time_used INTEGER, first_used DATE, last_used DATE)
+CREATE UNIQUE INDEX if not exists user_records_idx0 on user_records(user_id, orig_cmd_id, cmd_id, type, reply_id)
+# private cmd and reply tables
+CREATE TABLE if not exists p_cmd_alias(user_id, cmd_id INTEGER, cmd TEXT, p_cmd_id INTEGER, active INTEGER)
+CREATE UNIQUE INDEX if not exists p_alias_idx0 on p_cmd_alias(user_id, cmd)
+CREATE TABLE if not exists p_replies(cmd_id INTEGER, type INTEGER, id INTEGER, hash VARCHAR(30), file_type VARCHAR(10), reply TEXT, stamp DATE, user_id INTEGER, time_used INTEGER)
+CREATE UNIQUE INDEX if not exists p_reply_idx0 on p_replies(user_id, cmd_id, id)
+# group tables for plugin management
+CREATE TABLE if not exists groups(group_id INTEGER PRIMARY KEY AUTOINCREMENT, group_vendor_id VARCHAR(15), enable INTEGER)
+CREATE UNIQUE INDEX if not exists group_idx0 on groups(group_vendor_id)
+CREATE TABLE if not exists group_cmd_sup(group_id INTEGER, cmd_id INTEGER, enable INTEGER)
+CREATE UNIQUE INDEX if not exists group_cmd_sup_idx0 on group_cmd_sup(group_id, cmd_id)
+# version control
+CREATE TABLE if not exists db_version(version TEXT)
