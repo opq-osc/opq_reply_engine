@@ -35,7 +35,7 @@ sudo apt install sqlite3
 
 ## 配置方法
 
-1. 克隆本仓库后，将本仓库的路径加入path
+1. 克隆本仓库后，将本仓库的路径加入pythonpath
 2. 进入该仓库的文件夹，将项目内的配置文件用例config.json.template虫命名为config.json, 并修改配置, 各项配置的说明如下
 ```shell
 super_user         # bot主人的qq
