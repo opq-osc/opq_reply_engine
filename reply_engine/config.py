@@ -3,9 +3,6 @@ import os
 import json
 from .exceptions import ConfigErrorException
 
-cur_file_dir = os.path.dirname(os.path.realpath(__file__))
-
-
 class replyConfig:
     def __init__(self):
         # 需要的botoy配置
@@ -62,7 +59,7 @@ class replyConfig:
 
     def read_local_config(self):
         # 如果有本地config则使用本地config
-        local_config = os.path.join(cur_file_dir, "config.json")
+        local_config = "config.json"
         if os.path.exists(local_config):
             with open(local_config, 'r', encoding='utf-8') as f:
                 config_json = json.load(f)

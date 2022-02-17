@@ -41,7 +41,7 @@ sudo apt install sqlite3
 ```shell
 export PYTHONPATH=/your/path/to/opq_reply_engine:$PYTHONPATH
 ```
-2. 进入该仓库的文件夹，将项目内的配置文件用例config.json.template虫命名为config.json, 并修改配置, 各项配置的说明如下
+2. 进入该仓库的文件夹，将项目内的配置文件config.json.template拷贝至bot的运行目录并重命名为config.json, 并修改配置, 各项配置的说明如下
 ```shell
 bot                # 机器人的qq (必须)
 super_user         # bot主人的qq (必须)
@@ -51,6 +51,8 @@ voice_dir          # 用于存放语音回复的路径 (默认产生在运行目
 private_limit      # 私聊回复与关键词的数量限制 (默认10)
 user_record_level  # 用户行为记录的等级 (默认 1 关键词级别的记录)
 ```
+也直接支持将上述配置直接加入botoy的botoy.json中,模块也能够成功读取，但优先级低于config.json
+
 3. 配置botoy插件来使用该模块的功能, 你可以使用 [example](example/bot_reply_engine) 目录下的插件文件来快速配置
 
 注：数据库文件会在第一次加载插件时创建，db_schema选项可以使用绝对路径来指定数据库文件的存放位置, 默认创建在运行路径下
