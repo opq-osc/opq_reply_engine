@@ -3,9 +3,6 @@ import os, json
 import re
 from .config import g_config
 
-cur_file_dir = os.path.dirname(os.path.realpath(__file__))
-
-
 # enums
 class CMD_TYPE:
     PIC = 1          # 0001
@@ -65,7 +62,7 @@ def match(keyword, string):
 
 class cmdDB:
     def __init__(self, use_regexp=False):
-        self.conn = sqlite3.connect(os.path.join(cur_file_dir, g_config.db_schema), check_same_thread=False)
+        self.conn = sqlite3.connect(g_config.db_schema, check_same_thread=False)
         self.db = self.conn.cursor()
         self.use_regexp = use_regexp
         self.conn.create_function("MATCH", 2, match)

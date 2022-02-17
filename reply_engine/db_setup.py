@@ -9,7 +9,7 @@ db_schema = g_config.db_schema
 
 def update_db():
 
-    conn = sqlite3.connect(os.path.join(cur_file_dir, db_schema))
+    conn = sqlite3.connect(db_schema)
     cur = conn.cursor()
 
     try:
