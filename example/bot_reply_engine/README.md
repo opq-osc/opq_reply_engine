@@ -1,0 +1,7 @@
+## 插件说明
+
+配置好reply_engine后, 直接将插件文件夹拷贝至botoy/plugin文件夹下使用
+
+该插件会创建一个replyServer实例在单独的线程下运行, 每个接收到的群消息都会进入replyServer的队列依次处理
+
+如果内部发生了未处理的异常会发送给super_user
