@@ -36,6 +36,9 @@ sudo apt install sqlite3
 ## 配置方法
 
 1. 克隆本仓库后，将本仓库的路径加入pythonpath
+```shell
+export PYTHONPATH=/your/path/to/opq_reply_engine:$PYTHONPATH
+```
 2. 进入该仓库的文件夹，将项目内的配置文件用例config.json.template虫命名为config.json, 并修改配置, 各项配置的说明如下
 ```shell
 super_user         # bot主人的qq
@@ -45,8 +48,7 @@ private_limit      # 私聊回复与关键词的数量限制
 user_record_level  # 用户行为记录的等级
 db_schema          # 要使用的sqlite db文件
 ```
-3. 运行目录下的db_setup.py构建数据库表结构
-4. 配置botoy插件来使用该模块的功能, 你可以使用 [example](example/bot_reply_engine) 目录下的插件文件来快速配置
+3. 配置botoy插件来使用该模块的功能, 你可以使用 [example](example/bot_reply_engine) 目录下的插件文件来快速配置
 
 ## 公共命令
 
