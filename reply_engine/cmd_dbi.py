@@ -1,17 +1,7 @@
 import sqlite3
 import os, json
 import re
-
-cur_file_dir = os.path.dirname(os.path.realpath(__file__))
-db_schema = ''
-try:
-    with open(os.path.join(cur_file_dir,'config.json'), 'r', encoding='utf-8') as f:
-        config = json.load(f)
-        db_schema = config['db_schema']
-        db_schema = os.path.join(cur_file_dir, db_schema)
-except:
-    print('Fail to get db_schema info')
-
+from .config import g_config
 
 # enums
 class CMD_TYPE:
@@ -72,7 +62,7 @@ def match(keyword, string):
 
 class cmdDB:
     def __init__(self, use_regexp=False):
-        self.conn = sqlite3.connect(db_schema, check_same_thread=False)
+        self.conn = sqlite3.connect(g_config.db_schema, check_same_thread=False)
         self.db = self.conn.cursor()
         self.use_regexp = use_regexp
         self.conn.create_function("MATCH", 2, match)

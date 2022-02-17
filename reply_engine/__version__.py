@@ -23,3 +23,4 @@ def check_db_version():
         except:
             logger.error("reply_engine: db更新失败")
             logger.error(traceback.format_exc())
+            raise
