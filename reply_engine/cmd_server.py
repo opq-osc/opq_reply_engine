@@ -3,7 +3,7 @@ import os
 import random
 import time
 
-from botoy import logger, GroupMsg, FriendMsg, jconfig, Action
+from botoy import logger, GroupMsg, FriendMsg, Action
 from botoy.utils import file_to_base64
 import httpx
 import re
@@ -14,43 +14,10 @@ from .cmd_dbi import cmdDB, cmdInfo, replyInfo, CMD_TYPE
 from .exceptions import *
 from .common_parser import common_group_parser, commonContext, picObj
 from .__version__ import check_version
+from .config import g_config
 
-cur_file_dir = os.path.dirname(os.path.realpath(__file__))
-pic_dir = ""  # 用于存放下载图片的路径
-voice_dir = ""  # 用于存放语音回复的路径
-super_user = 0  # bot主人的qq
-private_limit = 10  # 私聊回复与关键词的数量限制
-user_record_level = 1  # 用户行为记录的等级
-# user_record_level:
-# 0: do not record
-# 1: cmd level record
-# 2: reply_level_record
-
-cmd_search_regexp = True  # 查询关键字时是否使用正则匹配
-bot_primary_cmd = "bot_theme"  # bot的主题图库, 用于在生成【对话列表】时挑选显示的图片
-
-try:
-    check_version()
-
-    with open(cur_file_dir + '/config.json', 'r', encoding='utf-8') as f:
-        config = json.load(f)
-        super_user = config["super_user"]
-        if "pic_dir" in config:
-            pic_dir = config['pic_dir']
-        else:
-            pic_dir = os.path.join(cur_file_dir, "pics")
-        if "voice_dir" in config:
-            voice_dir = config['voice_dir']
-        else:
-            voice_dir = os.path.join(cur_file_dir, "voice")
-        if "user_record_level" in config:
-            user_record_level = config["user_record_level"]
-        if "private_limit" in config:
-            private_limit = config["user_record_level"]
-except:
-    logger.error('配置错误')
-    raise
-
+# 数据库更新，失败的话抛出异常
+check_version()
 
 g_user_cache = {}
 g_group_cache = {}
@@ -80,13 +47,13 @@ def get_user(user_qq: int):
         db = cmdDB()
         user_info = db.get_user(user_qq)
         if user_info:
-            user_info.private_limit = private_limit
+            user_info.private_limit = g_config.private_limit
             g_user_cache[user_qq] = user_info
         else:
             db.add_user(user_qq)
             user_info = db.get_user(str(user_qq))
             if user_info:
-                user_info.private_limit = private_limit
+                user_info.private_limit = g_config.private_limit
                 g_user_cache[user_qq] = user_info
 
     return user_info
@@ -144,7 +111,7 @@ class Selector:
 class replyServer:
 
     def __init__(self, async_server=True):
-        self.db = cmdDB(use_regexp=cmd_search_regexp)
+        self.db = cmdDB(use_regexp=g_config.cmd_search_regexp)
         self.cmd_info = cmdInfo()
         self.cur_dir = ""  # 文件的操作路径
         self.reply = ""  # 存储文字回复/图片MD5/路径
@@ -160,7 +127,7 @@ class replyServer:
             self.action = None
         else:
             self.cmd_queue = queue.Queue()
-            self.action = Action(jconfig.bot, host=jconfig.host, port=jconfig.port)
+            self.action = Action(g_config.bot, host=g_config.host, port=g_config.port)
 
     def checkout(self, cmd: str, user_qq: int, cmd_type=0, create=False, check_active=True, private=False, full=True):
         # 关键词检索函数, 或是新建关键词, 成功的话会对self.cmd_info赋值
@@ -193,14 +160,14 @@ class replyServer:
         # build path to retrieve image and voice file
         if self.cmd_info:
             if private:
-                self.cur_dir = os.path.join(pic_dir, f"_{user_qq}", self.cmd_info.cmd)
+                self.cur_dir = os.path.join(g_config.pic_dir, f"_{user_qq}", self.cmd_info.cmd)
             else:
-                self.cur_dir = os.path.join(pic_dir, self.cmd_info.cmd)
+                self.cur_dir = os.path.join(g_config.pic_dir, self.cmd_info.cmd)
         elif create:
             if private:
-                self.cur_dir = os.path.join(pic_dir, f"_{user_qq}", cmd)
+                self.cur_dir = os.path.join(g_config.pic_dir, f"_{user_qq}", cmd)
             else:
-                self.cur_dir = os.path.join(pic_dir, cmd)
+                self.cur_dir = os.path.join(g_config.pic_dir, cmd)
 
         # might be situation that keyword already exists but path is not built
         if create and not os.path.exists(self.cur_dir) and (cmd_type & CMD_TYPE.PIC):
@@ -240,7 +207,7 @@ class replyServer:
             raise CmdWithRegExpException
 
     def reply_super(self, reply: str):
-        self.action.sendFriendText(super_user, reply)
+        self.action.sendFriendText(g_config.super_user, reply)
 
     def enqueue(self, ctx: Union[GroupMsg, FriendMsg]):
         if self.cmd_queue:
@@ -291,7 +258,7 @@ class replyServer:
 
         if len(ctx.at_target):
             target_qq = ctx.at_target[0]
-            if jconfig.bot in ctx.at_target:
+            if g_config.bot in ctx.at_target:
                 flag_at_me = True
 
         if flag_at_me or len(ctx.at_target) == 0:  # 如果有@并且不是@自己，则忽略
@@ -316,11 +283,14 @@ class replyServer:
 
         arg = ""
         checkout_good = False
+
+        # 预处理
         content = ctx.content.strip()
         if len(content) > 1:
             content = re.sub("[!?\uff1f\uff01]$", '', content)  # erase ! ? at end of content
         pic_flag = False
 
+        # 查看关键词是否存在
         space_index = content.find(' ')  # 附带参数的关键词
         if space_index == -1:
             checkout_good = self.checkout(content, ctx.from_user, private=flag_at_me, full=False)
@@ -332,7 +302,7 @@ class replyServer:
         if not checkout_good:
             return
 
-        if flag_at_me:
+        if flag_at_me:  # @自己时处理私人消息
             self.reply_at = int(ctx.from_user)
             return self.handle_private_cmd()
 
@@ -353,7 +323,7 @@ class replyServer:
                 return self.db.add_private_alias(self.user_info.user_id, max_id + 1, cmd, parent)
 
     def check_admin(self, user_qq: int):
-        if user_qq == super_user:
+        if user_qq == g_config.super_user:
             return True
         else:
             self.reply_type = REPLY_TYPE.TEXT
@@ -363,7 +333,7 @@ class replyServer:
     def set_cmd_type(self, cmd, arg):
         if arg is None:
             return
-        if self.checkout(cmd, super_user):
+        if self.checkout(cmd, g_config.super_user):
             cmd_type = int(arg.strip())
             if not os.path.exists(self.cur_dir) and (cmd_type & CMD_TYPE.PIC):
                 os.mkdir(self.cur_dir)
@@ -397,7 +367,7 @@ class replyServer:
         cmd = cmd.strip()
         if cmd and level:
             level = int(level)
-            if self.checkout(cmd, super_user):
+            if self.checkout(cmd, g_config.super_user):
                 self.db.set_cmd_level(self.cmd_info.cmd_id, level)
                 self.reply_type = REPLY_TYPE.TEXT
                 self.reply = "关键词【{}】，等级已修改为【{}】".format(cmd, level)
@@ -407,7 +377,7 @@ class replyServer:
 
     def set_permission(self, target_qq: int, permission):
         if target_qq == 0:
-            target_qq = super_user
+            target_qq = g_config.super_user
         if not permission:
             return
 
@@ -614,11 +584,11 @@ class replyServer:
             p_cmd = cmd[space_index + 1:]
             p_cmd = p_cmd.strip()
             cmd = cmd[0:space_index]
-            if self.checkout(cmd, super_user, check_active=False):
+            if self.checkout(cmd, g_config.super_user, check_active=False):
                 self.reply_type = REPLY_TYPE.TEXT
                 self.reply = "关键词【{}】已存在，不可以设置为同义词捏".format(cmd)
                 return
-            if self.checkout(p_cmd, super_user):
+            if self.checkout(p_cmd, g_config.super_user):
                 self.add_alias(cmd, self.cmd_info.cmd_id, 0, 0)
                 self.reply_type = REPLY_TYPE.TEXT
                 self.reply = "同义词设置成功:{} = {}".format(cmd, p_cmd)
@@ -654,12 +624,12 @@ class replyServer:
         self.reply_type = REPLY_TYPE.TEXT
         reports = ""
         logger.info("音频扫描开始")
-        voice_subs = os.listdir(voice_dir)
+        voice_subs = os.listdir(g_config.voice_dir)
         for cmd in voice_subs:
-            sub_dir = os.path.join(voice_dir, cmd)
+            sub_dir = os.path.join(g_config.voice_dir, cmd)
             logger.info("查找到文件夹:" + sub_dir)
             if os.path.isdir(sub_dir):
-                if not self.checkout(cmd, super_user, cmd_type=CMD_TYPE.VOICE, create=True):
+                if not self.checkout(cmd, g_config.super_user, cmd_type=CMD_TYPE.VOICE, create=True):
                     self.reply = "命令索引创建/查找失败"
                     return
                 reports += self.scan_voice_sub_dir(cmd, sub_dir)
@@ -773,7 +743,7 @@ class replyServer:
             self.usage_increase(self.user_info.user_id, self.cmd_info.orig_id, self.cmd_info.cmd_id,
                                 CMD_TYPE.VOICE, voice_info.reply_id)
             self.reply_type = REPLY_TYPE.VOICE
-            self.reply = os.path.join(voice_dir,
+            self.reply = os.path.join(g_config.voice_dir,
                                       "{}/{}.{}".format(self.cmd_info.cmd, voice_info.tag, voice_info.file_type))
 
     def handle_private_cmd(self):
@@ -798,9 +768,9 @@ class replyServer:
         return reply_info
 
     def usage_increase(self, user_id, orig_id, cmd_id, cmd_type, reply_id, private=False):
-        if user_record_level == 0:  # do not save record
+        if g_config.user_record_level == 0:  # do not save record
             return
-        elif user_record_level == 1:  # save cmd level record
+        elif g_config.user_record_level == 1:  # save cmd level record
             cmd_type = 0
             reply_id = 0
         self.db.used_inc(user_id, orig_id, cmd_id,
@@ -864,7 +834,7 @@ class replyServer:
         private_cmd = self.list_cmd(user_qq, private=True)
 
         template = f"你可用的公共列表:\n{public_cmd}\n-------------\n你可用的私人列表:\n{private_cmd}"
-        if self.checkout(bot_primary_cmd, user_qq):
+        if self.checkout(g_config.bot_primary_cmd, user_qq):
             template += "[PICFLAG]"
             self.random_pic("")
             self.reply2 = template
@@ -947,7 +917,7 @@ class pluginManager:
         return self.checkout(ctx.FromGroupId, create=True)
 
     def app_usage(self, user_qq):  # increase plugin usage record
-        if user_record_level == 0:  # do not save record
+        if g_config.user_record_level == 0:  # do not save record
             return
         user_info = get_user(user_qq)
         if user_info:

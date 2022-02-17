@@ -1,17 +1,10 @@
 import sqlite3
 import os, json
 import re
+from .config import g_config
 
 cur_file_dir = os.path.dirname(os.path.realpath(__file__))
-db_schema = ''
-
-try:
-    with open(os.path.join(cur_file_dir, 'config.json'), 'r', encoding='utf-8') as f:
-        config = json.load(f)
-        db_schema = config['db_schema']
-except:
-    print('Cannot resolve db_schema name from config.json')
-    raise
+db_schema = g_config.db_schema
 
 
 def update_db():

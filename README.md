@@ -41,12 +41,13 @@ export PYTHONPATH=/your/path/to/opq_reply_engine:$PYTHONPATH
 ```
 2. 进入该仓库的文件夹，将项目内的配置文件用例config.json.template虫命名为config.json, 并修改配置, 各项配置的说明如下
 ```shell
-super_user         # bot主人的qq
-pic_dir            # 用于存放下载图片的路径
-voice_dir          # 用于存放语音回复的路径
-private_limit      # 私聊回复与关键词的数量限制
-user_record_level  # 用户行为记录的等级
-db_schema          # 要使用的sqlite db文件
+bot                # 机器人的qq (必须)
+super_user         # bot主人的qq (必须)
+db_schema          # 要使用的sqlite db文件 (必须)
+pic_dir            # 用于存放下载图片的路径 (默认产生在运行目录下 pics)
+voice_dir          # 用于存放语音回复的路径 (默认产生在运行目录下 voice)
+private_limit      # 私聊回复与关键词的数量限制 (默认10)
+user_record_level  # 用户行为记录的等级 (默认 1 关键词级别的记录)
 ```
 3. 配置botoy插件来使用该模块的功能, 你可以使用 [example](example/bot_reply_engine) 目录下的插件文件来快速配置
 
