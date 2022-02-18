@@ -129,7 +129,7 @@ class replyServer:
             self.cmd_queue = queue.Queue()
             self.action = Action(g_config.bot, host=g_config.host, port=g_config.port)
 
-    def checkout(self, cmd: str, user_qq: int, cmd_type=0, create=False, check_active=True, private=False, full=True):
+    def checkout(self, cmd: str, user_qq: int, cmd_type=0, create=False, check_active=True, private=False, full=True, real=True):
         # 关键词检索函数, 或是新建关键词, 成功的话会对self.cmd_info赋值
         # cmd: 关键词
         # user_qq: 发送关键词的qq号
@@ -137,7 +137,8 @@ class replyServer:
         # create: 关键词不存在的话是否创建
         # check: 是否检查active
         # private: 是否为私人关键词检索
-
+        # full: 是否使用全匹配 （不使用正则匹配）
+        # real: 是否获取同义词的父关键词
         self.user_info = get_user(user_qq)
         if not self.user_info:
             return False
@@ -150,9 +151,9 @@ class replyServer:
             self.cmd_check(cmd)
 
         if private:
-            self.cmd_info = self.db.get_private_cmd(self.user_info.user_id, cmd, real=True)
+            self.cmd_info = self.db.get_private_cmd(self.user_info.user_id, cmd, real=real)
         else:
-            self.cmd_info = self.db.get_cmd(cmd, real=True, full=full)  # alias is handled inside
+            self.cmd_info = self.db.get_cmd(cmd, real=real, full=full)  # alias is handled inside
 
         if not self.cmd_info and not create:
             return False
@@ -346,7 +347,7 @@ class replyServer:
             return
         cmd = cmd.strip()
         self.reply_type = REPLY_TYPE.TEXT
-        if self.checkout(cmd, user_qq, check_active=False):
+        if self.checkout(cmd, user_qq, check_active=False, real=False):
             if self.cmd_info.cmd_type == CMD_TYPE.PLUGIN and group_qq != "":
                 group_info = get_group(group_qq)
                 self.db.set_group_cmd_status(group_info.group_id, self.cmd_info.cmd_id, active)
